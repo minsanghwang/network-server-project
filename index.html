@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Network &amp; Server project</title>
+<meta name="description" content="GNS3 가상 환경에서 3계층 캠퍼스 네트워크를 설계하고 DHCP·DNS·웹·DB 서버를 올려 하나의 사내 정보시스템으로 통합한 팀 프로젝트.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Network & Server project">
+<meta property="og:description" content="3계층 캠퍼스 네트워크 설계와 서버 인프라 구축 프로젝트">
+<meta property="og:image" content="assets/topology.webp">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230F1B2A'/%3E%3Cpath d='M6 16h20' stroke='%235FA3FF' stroke-width='3'/%3E%3Cpath d='M16 6v20' stroke='%23F0A23A' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Concept: left-aligned editorial layout. Section titles sit in a left rail, content on the right.
+   One motif: a split rule in two colors, one for each Core switch path (blue = Core-SW1, amber = Core-SW2). */
+:root {
+  --bg: #F4F6F8;
+  --surface: #FFFFFF;
+  --ink: #0F1B2A;
+  --muted: #55657A;
+  --rule: #D4DBE3;
+  --a: #1D5FD0;
+  --b: #A75A00;
+  --a-soft: #E3EDFC;
+  --b-soft: #FBEBD3;
+  --code-bg: #EAEFF4;
+  --sans: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B131C; --surface: #121D29; --ink: #E8EEF4; --muted: #8FA1B3; --rule: #263646;
+    --a: #6DAAFF; --b: #F0A23A; --a-soft: #15294A; --b-soft: #3A2A10; --code-bg: #0F1A26;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B131C; --surface: #121D29; --ink: #E8EEF4; --muted: #8FA1B3; --rule: #263646;
+  --a: #6DAAFF; --b: #F0A23A; --a-soft: #15294A; --b-soft: #3A2A10; --code-bg: #0F1A26;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--sans); font-size: 16px; line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--a); text-underline-offset: 3px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--a); outline-offset: 3px; border-radius: 3px; }
+code, .mono { font-family: var(--mono); font-size: .9em; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px)); }
+
+/* top bar */
+.bar { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--rule); }
+.bar .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 24px; padding-block: 12px; }
+.bar b { font-weight: 700; font-size: 15px; }
+.bar nav { display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 14px; }
+.bar nav a { color: var(--muted); text-decoration: none; }
+.bar nav a:hover { color: var(--ink); text-decoration: underline; }
+
+/* hero */
+.hero { padding-block: 72px 36px; }
+h1 { margin: 0; font-size: clamp(40px, 8vw, 84px); line-height: 1.04; font-weight: 800; letter-spacing: -0.035em; text-wrap: balance; }
+.split { display: flex; height: 6px; width: 120px; margin: 28px 0 24px; }
+.split i { flex: 1; }
+.split i:first-child { background: var(--a); }
+.split i:last-child { background: var(--b); }
+.lead { max-width: 40em; margin: 0; font-size: clamp(17px, 2.2vw, 20px); color: var(--ink); text-wrap: pretty; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px 32px; margin: 44px 0 0; padding-top: 20px; border-top: 1px solid var(--rule); }
+.facts div { min-width: 0; }
+.facts dt { font-size: 13px; color: var(--muted); }
+.facts dd { margin: 2px 0 0; font-weight: 600; overflow-wrap: anywhere; }
+
+/* original topology image */
+.shot { margin: 0 0 40px; }
+.shot .frame { overflow-x: auto; border: 1px solid var(--rule); background: #fff; border-radius: 6px; }
+.shot img { display: block; width: 100%; min-width: 880px; height: auto; }
+.shot figcaption { margin-top: 10px; font-size: 14px; color: var(--muted); }
+
+/* sections */
+section.sec { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px 48px; padding-block: 56px; border-top: 1px solid var(--rule); }
+.sec > header { align-self: start; position: sticky; top: 84px; }
+.sec h2 { margin: 0; font-size: 26px; line-height: 1.25; font-weight: 700; letter-spacing: -0.02em; }
+.sec header p { margin: 8px 0 0; font-size: 14px; color: var(--muted); line-height: 1.55; }
+.body { min-width: 0; display: flex; flex-direction: column; gap: 32px; }
+.body h3 { margin: 0 0 10px; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.body p { margin: 0 0 10px; max-width: 46em; text-wrap: pretty; }
+.body p:last-child { margin-bottom: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+ul.pts { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; max-width: 46em; }
+ul.pts li::marker { color: var(--muted); }
+
+/* tables */
+.tw { overflow-x: auto; border-top: 1px solid var(--ink); }
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+th, td { text-align: left; padding: 10px 16px 10px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 13px; white-space: nowrap; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; padding-left: 16px; }
+td.nw { white-space: nowrap; }
+tr.hl td { font-weight: 700; }
+.tag { display: inline-block; font-family: var(--mono); font-size: 12.5px; padding: 0 7px; border-radius: 4px; background: var(--a-soft); color: var(--a); }
+.tag.b { background: var(--b-soft); color: var(--b); }
+
+/* capacity bar */
+.cap { display: flex; flex-direction: column; gap: 10px; }
+.track { position: relative; height: 22px; background: var(--rule); border-radius: 3px; overflow: hidden; }
+.track .pool { position: absolute; inset: 0 auto 0 0; width: 75.7%; background: var(--a); opacity: .45; }
+.track .now { position: absolute; inset: 0 auto 0 0; width: 2%; min-width: 4px; background: var(--b); }
+.keys { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 13.5px; color: var(--muted); }
+.keys span { display: inline-flex; align-items: center; gap: 8px; }
+.keys i { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+.keys .k0 { background: var(--rule); }
+.keys .k1 { background: var(--a); opacity: .45; }
+.keys .k2 { background: var(--b); }
+
+/* answer blocks */
+.answer { border-left: 4px solid var(--a); padding: 2px 0 2px 18px; max-width: 46em; }
+.answer.b { border-left-color: var(--b); }
+.answer strong { display: block; font-size: 19px; line-height: 1.45; margin-bottom: 4px; }
+.fig { overflow-x: auto; }
+.fig svg { display: block; width: 100%; min-width: 760px; height: auto; }
+.fig svg text { font-family: var(--sans); fill: var(--ink); }
+.fig .box { fill: var(--surface); stroke: var(--muted); stroke-width: 1.4; }
+.fig .core { fill: var(--ink); }
+.fig .core-t { fill: var(--bg); }
+.fig .sub { font-size: 12px; fill: var(--muted); }
+.fig .nm { font-size: 14px; font-weight: 700; }
+.fig .l-a { stroke: var(--a); stroke-width: 3; }
+.fig .l-b { stroke: var(--b); stroke-width: 3; }
+figcaption.cap-t { margin-top: 8px; font-size: 13.5px; color: var(--muted); }
+
+pre { margin: 0; padding: 16px 18px; background: var(--code-bg); border-radius: 6px; overflow-x: auto; font-family: var(--mono); font-size: 13.5px; line-height: 1.75; }
+
+/* troubleshooting */
+.case { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 4px 28px; padding-block: 18px; border-bottom: 1px solid var(--rule); }
+.cases .case:first-child { border-top: 1px solid var(--ink); }
+.case h3 { margin: 0; font-size: 16px; }
+.case dl { margin: 0; display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 6px 14px; }
+.case dt { font-size: 13px; color: var(--muted); padding-top: 2px; }
+.case dd { margin: 0; }
+
+footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size: 14px; color: var(--muted); }
+
+@media (max-width: 880px) {
+  section.sec { grid-template-columns: minmax(0, 1fr); padding-block: 40px; }
+  .sec > header { position: static; }
+  .case { grid-template-columns: minmax(0, 1fr); }
+  .hero { padding-block: 44px 28px; }
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="wrap">
+    <b>Network &amp; Server project</b>
+    <nav aria-label="섹션">
+      <a href="#design">네트워크 설계</a>
+      <a href="#server">서버 구축</a>
+      <a href="#capacity">증설과 접근</a>
+      <a href="#trouble">트러블슈팅</a>
+      <a href="#verify">검증</a>
+    </nav>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section class="hero" aria-labelledby="title">
+    <h1 id="title">Network &amp; Server project</h1>
+    <div class="split" aria-hidden="true"><i></i><i></i></div>
+    <p class="lead">GNS3 가상 환경에서 3계층 캠퍼스 네트워크를 설계하고, 그 위에 DHCP·DNS·웹·DB 서버를 올려 하나의 사내 정보시스템으로 통합한 팀 프로젝트입니다. 5개 Campus 중 IT/기술센터를 맡았습니다.</p>
+    <dl class="facts">
+      <div><dt>담당</dt><dd>IT/기술센터 Campus 네트워크와 서버</dd></div>
+      <div><dt>할당 대역</dt><dd class="mono">10.14.0.0/16</dd></div>
+      <div><dt>도메인</dt><dd class="mono">it.cooping.com</dd></div>
+      <div><dt>환경</dt><dd>GNS3, Cisco c3745, VirtualBox, Rocky Linux 9</dd></div>
+      <div><dt>협업</dt><dd>본사, 데이터센터, 물류센터와 WAN 연동 및 DB 규격 협의</dd></div>
+    </dl>
+  </section>
+
+  <figure class="shot">
+    <div class="frame">
+      <a href="assets/topology.webp" target="_blank" rel="noopener">
+        <img src="assets/topology.webp" width="2567" height="1097" alt="GNS3 구성도 원본: WAN-IT 라우터 아래 Core-SW1·2, Dist-SW1~4, Access-SW1~5와 서버 구간(SRV-AGG), PC 25대">
+      </a>
+    </div>
+    <figcaption>GNS3 구성도 원본입니다. 이미지를 누르면 원본 크기로 볼 수 있습니다.</figcaption>
+  </figure>
+
+  <!-- 설계 -->
+  <section class="sec" id="design" aria-labelledby="h-design">
+    <header>
+      <h2 id="h-design">네트워크 설계</h2>
+      <p>Core, Distribution, Access 3계층과 이중화</p>
+    </header>
+    <div class="body">
+      <div>
+        <h3>2계층에서 3계층으로 재설계</h3>
+        <p>처음에는 Core가 Distribution 역할을 겸하는 Collapsed Core로 구축했습니다. 부서별 PC가 늘면 모든 Access를 Core에 직결해야 해서 포트와 이중화에 한계가 있었고, Distribution 4대를 추가해 3계층으로 바꿨습니다.</p>
+        <div class="tw">
+          <table>
+            <thead><tr><th>구분</th><th>변경 전</th><th>변경 후</th></tr></thead>
+            <tbody>
+              <tr><td>게이트웨이 (SVI + HSRP)</td><td>Core-SW1, 2</td><td>Dist-SW1~4</td></tr>
+              <tr><td>Core 역할</td><td>라우팅과 VLAN 게이트웨이</td><td>백본 라우팅만 담당</td></tr>
+              <tr><td>Access 수용</td><td>Core에 직결 (포트 한계)</td><td>Dist가 집선해 확장</td></tr>
+              <tr><td>이중화</td><td>Core 2대</td><td>Core 2대 + Dist 쌍 2조</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <h3>설계 결정</h3>
+        <ul class="pts">
+          <li><b>Core 양쪽 연결.</b> 각 Dist를 Core-SW1과 Core-SW2에 모두 연결했습니다. Core 한 대가 내려가도 OSPF가 우회 경로를 고르고, 주요 경로는 ECMP로 양쪽에 등록됩니다.</li>
+          <li><b>라우팅 전용 VLAN.</b> c3745의 NM-16ESW 포트는 L2 전용이라 <code>no switchport</code>로 라우팅 포트를 만들 수 없고 내장 L3 포트는 2개뿐이었습니다. VLAN 400~403을 L3 링크용으로 두고 SVI로 연결해 포트 제약을 피했습니다.</li>
+          <li><b>게이트웨이 이중화.</b> Dist 쌍마다 HSRP를 적용했습니다. Active는 priority 110, Standby는 90이고 <code>preempt</code>로 장애 복구 후 원래 Active가 역할을 되찾습니다.</li>
+          <li><b>OSPF Area 0.</b> WAN-IT, Core, Dist 전체가 한 영역에 있고, 사용자 VLAN은 <code>passive-interface</code>로 인접 형성을 막았습니다.</li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>VLAN과 IP 설계</h3>
+        <div class="tw">
+          <table>
+            <thead><tr><th>VLAN</th><th>용도</th><th>대역</th><th>Access</th><th>Active / Standby</th></tr></thead>
+            <tbody>
+              <tr><td><span class="tag">410</span></td><td>개발팀</td><td class="mono nw">10.14.10.0/24</td><td>Access-SW1</td><td>Dist-SW1 / Dist-SW2</td></tr>
+              <tr><td><span class="tag">420</span></td><td>인프라팀</td><td class="mono nw">10.14.20.0/24</td><td>Access-SW2</td><td>Dist-SW1 / Dist-SW2</td></tr>
+              <tr><td><span class="tag b">430</span></td><td>네트워크팀</td><td class="mono nw">10.14.30.0/24</td><td>Access-SW3</td><td>Dist-SW3 / Dist-SW4</td></tr>
+              <tr><td><span class="tag b">440</span></td><td>시스템팀</td><td class="mono nw">10.14.40.0/24</td><td>Access-SW4</td><td>Dist-SW3 / Dist-SW4</td></tr>
+              <tr><td><span class="tag b">450</span></td><td>보안, QA, 운영</td><td class="mono nw">10.14.50.0/24</td><td>Access-SW5</td><td>Dist-SW3 / Dist-SW4</td></tr>
+              <tr><td><span class="tag">490</span></td><td>서버존</td><td class="mono nw">10.14.90.0/24</td><td>SRV-AGG</td><td>Dist-SW1 / Dist-SW2</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small muted" style="margin-top:10px">모든 VLAN의 게이트웨이(VIP)는 <code>.1</code>, Dist 스위치 주소는 <code>.2</code>와 <code>.3</code>입니다.</p>
+      </div>
+
+      <div>
+        <h3>라우팅 전용 VLAN</h3>
+        <div class="tw">
+          <table>
+            <thead><tr><th>VLAN</th><th>구간</th><th>대역</th></tr></thead>
+            <tbody>
+              <tr><td><span class="tag">400</span></td><td>WAN-IT와 Core-SW1</td><td class="mono">10.14.0.0/30</td></tr>
+              <tr><td><span class="tag b">401</span></td><td>WAN-IT와 Core-SW2</td><td class="mono">10.14.0.4/30</td></tr>
+              <tr><td><span class="tag">402</span></td><td>Core-SW1과 Dist 전체</td><td class="mono">10.14.0.8/29</td></tr>
+              <tr><td><span class="tag b">403</span></td><td>Core-SW2와 Dist 전체</td><td class="mono">10.14.0.16/29</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 서버 -->
+  <section class="sec" id="server" aria-labelledby="h-server">
+    <header>
+      <h2 id="h-server">서버 구축</h2>
+      <p>서버존(VLAN 490)에서 Rocky Linux 9로 운영</p>
+    </header>
+    <div class="body">
+      <div class="tw">
+        <table>
+          <thead><tr><th>서버</th><th>IP</th><th>역할</th></tr></thead>
+          <tbody>
+            <tr><td>DHCP-Server</td><td class="mono nw">10.14.90.10</td><td>ISC DHCP</td></tr>
+            <tr><td>IT-DB</td><td class="mono nw">10.14.90.11</td><td>Apache 2.4, PHP 8.0 (FPM), MariaDB</td></tr>
+            <tr><td>DNS-01</td><td class="mono nw">10.14.90.12</td><td>권한 네임서버 (BIND)</td></tr>
+            <tr><td>CNS-01</td><td class="mono nw">10.14.90.13</td><td>캐시 네임서버 (BIND)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <h3>DNS를 권한 서버와 캐시 서버로 분리</h3>
+        <p>처음에는 DNS 서버 한 대가 내부 조회와 외부 조회를 모두 처리했습니다. ISC 권고에 따라 권한 서버와 재귀 서버를 나눴고, PC는 CNS-01만 바라봅니다. 질의가 내부 도메인인지 외부인지는 CNS-01이 가장 긴 zone 매칭 규칙으로 결정합니다.</p>
+<pre>PC → CNS-01 (캐시, 10.14.90.13)
+       ├─ it.cooping.com  → DNS-01 (권한, 10.14.90.12)
+       ├─ cooping.com     → 데이터센터 DNS (10.12.150.11)
+       └─ 그 외 (인터넷)   → 본사 DNS (예정)</pre>
+      </div>
+
+      <div>
+        <h3>DHCP</h3>
+        <ul class="pts">
+          <li>VLAN 410~450에 각각 <code>.11</code>~<code>.200</code> 범위를 할당했고, 서버존은 고정 IP로 운영합니다.</li>
+          <li>게이트웨이로 HSRP VIP를 내려주기 때문에 Dist 장애 때도 클라이언트 설정을 바꿀 필요가 없습니다.</li>
+          <li>클라이언트와 서버가 다른 서브넷이라 Dist-SW SVI에 <code>ip helper-address</code>로 Relay를 구성했습니다.</li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>웹 서비스 두 개</h3>
+        <p><b>Cooping 쇼핑몰</b> (<code>shop.it.cooping.com</code>). 상품, 장바구니, 주문과 결제, 환불까지 직접 구현했고 DB 테이블은 8개입니다. 주문 처리는 <code>SELECT ... FOR UPDATE</code>로 재고를 잠근 뒤 차감하는 트랜잭션입니다. 물류센터와 <code>product_id CHAR(5)</code>, <code>order_id CHAR(8)</code> 형식을 맞춰, 나중에 물류 시스템과 키 값으로 바로 매칭할 수 있습니다.</p>
+        <p><b>QA 시스템</b> (<code>qa.it.cooping.com</code>). 물류센터의 파손과 분실 건을 조회하고 미확인, 처리중, 보류, 완료, 반려 5단계로 처리 상태를 관리합니다. 물류센터 실 DB가 준비되기 전이라 같은 구조의 mock DB로 개발했고, 연동 지점을 DB 접속 정보 한 곳에 모아 실 DB로 바꿀 때 화면 코드를 고치지 않아도 됩니다.</p>
+        <p class="small muted">두 사이트 모두 Apache 가상호스트에서 <code>Require ip</code>로 접근 대역을 제한합니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 증설과 접근 -->
+  <section class="sec" id="capacity" aria-labelledby="h-cap">
+    <header>
+      <h2 id="h-cap">증설과 접근 분석</h2>
+      <p>설계 문서의 주소 계획으로 계산한 이론값입니다.</p>
+    </header>
+    <div class="body">
+      <div>
+        <h3>PC는 몇 대까지 늘릴 수 있나</h3>
+        <div class="answer">
+          <strong>DHCP 설정 그대로면 950대, 주소 기준 이론상 1,255대입니다.</strong>
+          <p class="muted" style="margin:0">현재 25대(VLAN당 5대)를 쓰고 있어서 DHCP 기준으로 925대를 더 붙일 수 있습니다.</p>
+        </div>
+
+        <div class="cap" role="img" aria-label="VLAN 하나의 주소 사용 현황: 이론 상한 251, DHCP 범위 190, 현재 5대" style="margin-top:22px">
+          <div class="track"><div class="pool"></div><div class="now"></div></div>
+          <div class="keys">
+            <span><i class="k2"></i>현재 5대</span>
+            <span><i class="k1"></i>DHCP 범위 190개</span>
+            <span><i class="k0"></i>이론 상한 251개</span>
+          </div>
+        </div>
+        <p class="small muted" style="margin-top:6px">VLAN 하나(/24) 기준입니다.</p>
+
+        <div class="tw" style="margin-top:18px">
+          <table>
+            <thead><tr><th>기준</th><th class="n">VLAN당</th><th class="n">사용자 VLAN 5개</th></tr></thead>
+            <tbody>
+              <tr><td>이론 상한 (/24의 254개에서 게이트웨이 3개 제외)</td><td class="n">251</td><td class="n">1,255</td></tr>
+              <tr><td>DHCP 할당 범위 (<code>.11</code>~<code>.200</code>)</td><td class="n">190</td><td class="n">950</td></tr>
+              <tr><td>현재 구축</td><td class="n">5</td><td class="n">25</td></tr>
+              <tr class="hl"><td>증설 여유 (DHCP 기준)</td><td class="n">185</td><td class="n">925</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <ul class="pts small" style="margin-top:14px">
+          <li>제외한 게이트웨이 3개는 HSRP VIP <code>.1</code>과 Dist 두 대의 SVI <code>.2</code>, <code>.3</code>입니다.</li>
+          <li>VLAN을 추가하면 VLAN당 251대씩 늘어납니다. <code>10.14.0.0/16</code>에는 사용 중인 7개 블록(링크용 <code>10.14.0.x</code>, 410~450, 490)을 빼고도 /24가 249개 남아 있고, /16 전체의 이론 상한은 65,534개 주소입니다.</li>
+          <li>실제 상한은 스위치 포트입니다. Access 스위치가 NM-16ESW 1개에 업링크 2개를 쓴다고 가정하면 스위치당 14대, 5대 합쳐 70대입니다. 이 값은 가정이라 장비 구성을 확인해야 합니다.</li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>개발 구간에 인프라 PC를 꽂으면 인프라 대역에 접속할 수 있나</h3>
+        <div class="answer b">
+          <strong>접속할 수 있습니다.</strong>
+          <p class="muted" style="margin:0">VLAN 간 통신은 Dist-SW1의 SVI에서 라우팅되고, 설계 문서에 VLAN 간 ACL이 없습니다.</p>
+        </div>
+
+        <div class="fig" style="margin-top:22px">
+          <figure style="margin:0">
+            <svg viewBox="0 0 900 120" role="img" aria-label="개발 포트에 연결한 PC가 Access-SW1, Dist-SW1을 거쳐 Dist-SW1 안에서 VLAN 410에서 420으로 라우팅되고 Access-SW2를 지나 인프라 PC에 도달하는 경로">
+              <line class="l-a" x1="150" y1="68" x2="200" y2="68"/>
+              <line class="l-a" x1="310" y1="68" x2="360" y2="68"/>
+              <line class="l-b" x1="540" y1="68" x2="590" y2="68"/>
+              <line class="l-b" x1="700" y1="68" x2="750" y2="68"/>
+
+              <rect class="box" x="0" y="38" width="150" height="60" rx="6"/>
+              <text class="nm" x="75" y="62" text-anchor="middle">인프라팀 PC</text>
+              <text class="sub" x="75" y="82" text-anchor="middle">개발 포트 (VLAN 410)</text>
+
+              <rect class="box" x="200" y="38" width="110" height="60" rx="6"/>
+              <text class="nm" x="255" y="62" text-anchor="middle">Access-SW1</text>
+              <text class="sub" x="255" y="82" text-anchor="middle">VLAN 410</text>
+
+              <text class="sub" x="450" y="22" text-anchor="middle">여기서 VLAN을 넘어 라우팅</text>
+              <rect class="box core" x="360" y="38" width="180" height="60" rx="6"/>
+              <text class="nm core-t" x="450" y="62" text-anchor="middle">Dist-SW1</text>
+              <text class="sub core-t" x="450" y="82" text-anchor="middle" style="fill:var(--bg)">SVI 410 ⇄ SVI 420</text>
+
+              <rect class="box" x="590" y="38" width="110" height="60" rx="6"/>
+              <text class="nm" x="645" y="62" text-anchor="middle">Access-SW2</text>
+              <text class="sub" x="645" y="82" text-anchor="middle">VLAN 420</text>
+
+              <rect class="box" x="750" y="38" width="150" height="60" rx="6"/>
+              <text class="nm" x="825" y="62" text-anchor="middle">인프라 서버·PC</text>
+              <text class="sub" x="825" y="82" text-anchor="middle">10.14.20.x</text>
+            </svg>
+            <figcaption class="cap-t">파랑은 VLAN 410, 주황은 VLAN 420 구간입니다. 개발 VLAN과 인프라 VLAN의 Active 게이트웨이가 모두 Dist-SW1이라 Core까지 올라가지 않습니다.</figcaption>
+          </figure>
+        </div>
+
+        <div class="tw" style="margin-top:18px">
+          <table>
+            <thead><tr><th></th><th>개발 포트(VLAN 410)에 연결</th><th>포트를 VLAN 420으로 변경</th></tr></thead>
+            <tbody>
+              <tr><td>받는 IP</td><td class="mono">10.14.10.11~200</td><td class="mono">10.14.20.11~200</td></tr>
+              <tr><td>인프라 대역 접속</td><td>가능 (L3 라우팅)</td><td>가능 (같은 VLAN)</td></tr>
+              <tr><td>쇼핑몰 접속</td><td>가능, <code>10.14.10.0/24</code> 허용 대역</td><td>거부</td></tr>
+              <tr><td>인프라 VLAN 브로드캐스트</td><td>수신하지 않음</td><td>수신</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <ul class="pts small" style="margin-top:14px">
+          <li>접근 권한이 사람이 아니라 IP 대역을 기준으로 정해집니다. 인프라팀 사용자가 개발 포트에 연결하면 개발 대역 IP를 받아 쇼핑몰 접근 제어를 통과합니다.</li>
+          <li>인프라 VLAN에 정식으로 들어오게 하려면 해당 포트를 <code>switchport access vlan 420</code>으로 바꾸고, Access-SW1과 Dist 사이 트렁크에 VLAN 420이 허용되는지 확인해야 합니다. 트렁크 허용 목록은 문서에 없어서 확인이 필요합니다.</li>
+          <li>호스트 방화벽(firewalld)이나 이후에 추가하는 ACL이 있으면 결과가 달라집니다.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 트러블슈팅 -->
+  <section class="sec" id="trouble" aria-labelledby="h-trouble">
+    <header>
+      <h2 id="h-trouble">트러블슈팅</h2>
+      <p>구축 중 마주친 장애 가운데 세 가지입니다.</p>
+    </header>
+    <div class="body">
+      <div class="cases">
+        <article class="case">
+          <h3>VLAN이 재부팅마다 사라짐</h3>
+          <dl>
+            <dt>증상</dt><dd>재부팅 후 VLAN이 사라지고 SVI가 내려가며 HSRP가 <code>Init</code> 상태가 됨</dd>
+            <dt>원인</dt><dd>VLAN 정보는 running-config가 아니라 flash의 <code>vlan.dat</code>에 저장되는데, GNS3 노드의 기본 디스크 용량이 부족해 저장이 실패하고 있었음</dd>
+            <dt>해결</dt><dd>모든 스위치 노드의 디스크를 32MiB로 늘려 포맷하고, VLAN 작업 뒤 <code>dir flash:</code> 확인을 절차로 고정</dd>
+          </dl>
+        </article>
+        <article class="case">
+          <h3>OSPF 인접이 반복해서 끊김</h3>
+          <dl>
+            <dt>증상</dt><dd>Dist 스위치 사이 OSPF 네이버가 끊기고 재수렴을 반복함</dd>
+            <dt>원인</dt><dd>사용자 VLAN에서도 OSPF가 동작해 Dist 쌍끼리 5개 이상의 중복 인접이 생겨 hello 교환이 부하를 키움</dd>
+            <dt>해결</dt><dd>사용자 VLAN을 <code>passive-interface</code>로 지정해 인접을 402와 403에서만 형성. 이후 모든 네이버가 FULL로 안정화</dd>
+          </dl>
+        </article>
+        <article class="case">
+          <h3>WAN 구간 편도 통신</h3>
+          <dl>
+            <dt>증상</dt><dd>다른 Campus로 ping을 보내면 나가기만 하고 응답이 돌아오지 않음</dd>
+            <dt>원인</dt><dd>static default route는 나가는 경로만 정의해서 상대 라우터가 <code>10.14.0.0/16</code>으로 돌아오는 경로를 몰랐음</dd>
+            <dt>해결</dt><dd>WAN 구간을 OSPF Area 0에 넣어 양쪽이 서로의 대역을 자동으로 학습하게 변경</dd>
+          </dl>
+        </article>
+      </div>
+      <p class="small muted">이 밖에 GNS3와 VirtualBox 사이 단방향 통신, DHCP 서비스 자동 시작 누락(APIPA 주소 수신), MTU 때문에 패키지 설치가 멈추는 문제도 해결했습니다.</p>
+    </div>
+  </section>
+
+  <!-- 검증 -->
+  <section class="sec" id="verify" aria-labelledby="h-verify">
+    <header>
+      <h2 id="h-verify">검증 결과</h2>
+    </header>
+    <div class="body">
+      <div class="tw">
+        <table>
+          <thead><tr><th>항목</th><th>결과</th></tr></thead>
+          <tbody>
+            <tr><td>OSPF 인접 (WAN-IT, Core, Dist 전체)</td><td>전 구간 FULL</td></tr>
+            <tr><td>HSRP Active / Standby</td><td>6개 VLAN 정상</td></tr>
+            <tr><td>Core 단일 장애 시 통신</td><td>유지 (ECMP 경로 자동 전환)</td></tr>
+            <tr><td>DHCP 자동 할당 (Relay 경유)</td><td>정상</td></tr>
+            <tr><td>내부 도메인 조회 (<code>it.cooping.com</code>)</td><td>정상</td></tr>
+            <tr><td>외부 도메인 조회 (데이터센터 경유)</td><td>CNS 포워딩 정상</td></tr>
+            <tr><td>쇼핑몰 전체 흐름</td><td>회원가입, 주문, 환불 정상</td></tr>
+            <tr><td>타 Campus 통신</td><td>정상</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">경로 확인 예: <code>O 172.16.0.16 [110/12] via 10.14.0.17, Vlan403</code>과 <code>via 10.14.0.9, Vlan402</code>가 함께 등록되어 있습니다.</p>
+      <div>
+        <h3>남은 과제</h3>
+        <ul class="pts">
+          <li>관리 네트워크 구축 (관리 VLAN, NTP, Syslog, NMS)</li>
+          <li>Dist 단일 장애 시 HSRP 페일오버 최종 검증</li>
+          <li>웹 서버 IP 직접 접속 차단 (firewalld 또는 ACL)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">GNS3 가상 환경에서 구축한 팀 프로젝트이며, 도메인과 IP는 실습용입니다.</div>
+</footer>
+
+</body>
+</html>
