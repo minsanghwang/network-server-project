@@ -183,6 +183,11 @@ tr.hl td { font-weight: 700; }
 .fig .nm { font-size: 14px; font-weight: 700; }
 .fig .l-a { stroke: var(--a); stroke-width: 3; }
 .fig .l-b { stroke: var(--b); stroke-width: 3; }
+.fig .l-line { stroke: var(--muted); stroke-width: 2; fill: none; }
+.fig .l-hl { stroke: var(--a); stroke-width: 3; }
+.fig .box.hl { fill: var(--a-soft); stroke: var(--a); stroke-width: 2.5; }
+.fig svg text.core-t { fill: var(--bg); }
+.fig svg text.hl-t { fill: var(--a); font-weight: 700; }
 figcaption.cap-t { margin-top: 8px; font-size: 13.5px; color: var(--muted); }
 
 pre { margin: 0; padding: 16px 18px; background: var(--code-bg); border-radius: 6px; overflow-x: auto; font-family: var(--mono); font-size: 13.5px; line-height: 1.75; }
@@ -211,6 +216,7 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
   <div class="wrap">
     <b>Network &amp; Server project</b>
     <nav aria-label="섹션">
+      <a href="#scope">기획 범위</a>
       <a href="#design">네트워크 설계</a>
       <a href="#server">서버 구축</a>
       <a href="#capacity">증설과 접근</a>
@@ -225,14 +231,52 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
   <section class="hero" aria-labelledby="title">
     <h1 id="title">Network &amp; Server project</h1>
     <div class="split" aria-hidden="true"><i></i><i></i></div>
-    <p class="lead">GNS3 가상 환경에서 3계층 캠퍼스 네트워크를 설계하고, 그 위에 DHCP·DNS·웹·DB 서버를 올려 하나의 사내 정보시스템으로 통합한 팀 프로젝트입니다. 5개 Campus 중 IT/기술센터를 맡았습니다.</p>
+    <p class="lead">GNS3 가상 환경에서 3계층 캠퍼스 네트워크를 설계하고, 그 위에 DHCP·DNS·웹·DB 서버를 올려 하나의 사내 정보시스템으로 통합한 팀 프로젝트입니다. 본사 1곳과 지사 3곳 구조에서 IT/기술센터 지사를 맡았습니다. 보안 영역은 제외하고 만들었습니다.</p>
     <dl class="facts">
-      <div><dt>담당</dt><dd>IT/기술센터 Campus 네트워크와 서버</dd></div>
+      <div><dt>담당</dt><dd>IT/기술센터 지사의 네트워크와 서버</dd></div>
       <div><dt>할당 대역</dt><dd class="mono">10.14.0.0/16</dd></div>
       <div><dt>도메인</dt><dd class="mono">it.cooping.com</dd></div>
       <div><dt>환경</dt><dd>GNS3, Cisco c3745, VirtualBox, Rocky Linux 9</dd></div>
-      <div><dt>협업</dt><dd>본사, 데이터센터, 물류센터와 WAN 연동 및 DB 규격 협의</dd></div>
+      <div><dt>협업</dt><dd>본사 및 다른 두 지사와 WAN 연동, DB 규격 협의</dd></div>
     </dl>
+  </section>
+
+  <!-- 기획 범위 -->
+  <section class="sec" id="scope" aria-labelledby="h-scope">
+    <header>
+      <h2 id="h-scope">기획 범위</h2>
+      <p>규모를 줄여 확정한 구조</p>
+    </header>
+    <div class="body">
+      <div class="answer">
+        <strong>더 큰 기업을 모델로 잡았다가, 본사 1곳과 지사 3곳으로 규모를 줄였습니다.</strong>
+        <p>처음에는 훨씬 큰 규모의 기업을 모티브로 하려 했습니다. 그렇게 하면 각 거점이 독립된 본사 규모가 되어, 지사를 두는 구조가 아니라 본사 여러 곳을 서로 잇는 구조가 됩니다. 그래서 본사 아래에 지사를 두는 구조가 되도록 규모를 축소했습니다.</p>
+      </div>
+      <figure class="fig" style="margin:0">
+        <svg viewBox="0 0 1000 360" role="img" aria-label="본사 아래에 물류센터, 데이터센터, IT/기술센터 지사 3곳이 있는 구조. IT/기술센터가 이 프로젝트의 담당 범위">
+          <line x1="500" y1="118" x2="500" y2="170" class="l-line"/>
+          <line x1="170" y1="170" x2="830" y2="170" class="l-line"/>
+          <line x1="170" y1="170" x2="170" y2="222" class="l-line"/>
+          <line x1="500" y1="170" x2="500" y2="222" class="l-line"/>
+          <line x1="830" y1="170" x2="830" y2="222" class="l-line l-hl"/>
+          <rect class="box core" x="380" y="30" width="240" height="88" rx="8"/>
+          <text class="nm core-t" x="500" y="66" text-anchor="middle">본사</text>
+          <text class="sub core-t" x="500" y="88" text-anchor="middle">10.11.0.0/16</text>
+          <text class="sub core-t" x="500" y="105" text-anchor="middle">전체 조직의 기준</text>
+          <rect class="box" x="50" y="222" width="240" height="96" rx="8"/>
+          <text class="nm" x="170" y="260" text-anchor="middle">물류센터 지사</text>
+          <text class="sub" x="170" y="282" text-anchor="middle">10.13.0.0/16</text>
+          <rect class="box" x="380" y="222" width="240" height="96" rx="8"/>
+          <text class="nm" x="500" y="260" text-anchor="middle">데이터센터 지사</text>
+          <text class="sub" x="500" y="282" text-anchor="middle">10.12.0.0/16</text>
+          <rect class="box hl" x="710" y="222" width="240" height="96" rx="8"/>
+          <text class="nm" x="830" y="260" text-anchor="middle">IT/기술센터 지사</text>
+          <text class="sub" x="830" y="282" text-anchor="middle">10.14.0.0/16</text>
+          <text class="sub hl-t" x="830" y="304" text-anchor="middle">이 프로젝트의 담당 범위</text>
+        </svg>
+        <figcaption class="cap-t">조직상의 소속 관계를 그린 그림입니다. 실제 WAN 링크 배치는 구성도를 기준으로 합니다.</figcaption>
+      </figure>
+    </div>
   </section>
 
   <figure class="shot">
@@ -605,12 +649,12 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
   <section class="sec" id="trouble" aria-labelledby="h-trouble">
     <header>
       <h2 id="h-trouble">트러블슈팅</h2>
-      <p>기획 단계의 규모 설계 문제를 먼저, 이어서 실무에서도 일어나는 장애를 정리했습니다.</p>
+      <p>설계 단계의 규모 문제를 먼저, 이어서 실무에서도 일어나는 장애를 정리했습니다.</p>
     </header>
     <div class="body">
       <div class="cases">
         <article class="case">
-          <h3>기획 단계의 규모 설계 문제</h3>
+          <h3>Collapsed Core 구조의 규모 한계</h3>
           <dl>
             <dt>상황</dt><dd>처음에는 Core가 Distribution 역할을 겸하는 2계층(Collapsed Core)으로 설계해 구축했고, 모든 Access를 Core에 직결했음</dd>
             <dt>문제</dt><dd>부서별 PC가 늘어나는 규모를 설계 때 산정하지 않아, Access를 늘릴수록 Core의 포트가 모자라고 게이트웨이와 이중화가 Core 두 대에 몰리는 구조였음</dd>
@@ -619,17 +663,9 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
           </dl>
         </article>
         <article class="case">
-          <h3>OSPF 인접이 반복해서 끊김</h3>
-          <dl>
-            <dt>증상</dt><dd>Dist 스위치 사이 OSPF 네이버가 끊기고 재수렴을 반복함</dd>
-            <dt>원인</dt><dd>사용자 VLAN에서도 OSPF가 동작해 Dist 쌍끼리 5개 이상의 중복 인접이 생겨 hello 교환이 부하를 키움</dd>
-            <dt>해결</dt><dd>사용자 VLAN을 <code>passive-interface</code>로 지정해 인접을 402와 403에서만 형성. 이후 모든 네이버가 FULL로 안정화</dd>
-          </dl>
-        </article>
-        <article class="case">
           <h3>WAN 구간 편도 통신</h3>
           <dl>
-            <dt>증상</dt><dd>다른 Campus로 ping을 보내면 나가기만 하고 응답이 돌아오지 않음</dd>
+            <dt>증상</dt><dd>다른 지사로 ping을 보내면 나가기만 하고 응답이 돌아오지 않음</dd>
             <dt>원인</dt><dd>static default route는 나가는 경로만 정의해서 상대 라우터가 <code>10.14.0.0/16</code>으로 돌아오는 경로를 몰랐음</dd>
             <dt>해결</dt><dd>WAN 구간을 OSPF Area 0에 넣어 양쪽이 서로의 대역을 자동으로 학습하게 변경</dd>
           </dl>
@@ -671,17 +707,14 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
             <tr><td>내부 도메인 조회 (<code>it.cooping.com</code>)</td><td>정상</td></tr>
             <tr><td>외부 도메인 조회 (데이터센터 경유)</td><td>CNS 포워딩 정상</td></tr>
             <tr><td>쇼핑몰 전체 흐름</td><td>회원가입, 주문, 환불 정상</td></tr>
-            <tr><td>타 Campus 통신</td><td>정상</td></tr>
+            <tr><td>본사와 타 지사 통신</td><td>정상</td></tr>
           </tbody>
         </table>
       </div>
       <p class="small muted">경로 확인 예: <code>O 172.16.0.16 [110/12] via 10.14.0.17, Vlan403</code>과 <code>via 10.14.0.9, Vlan402</code>가 함께 등록되어 있습니다.</p>
-      <div>
-        <h3>남은 과제</h3>
-        <ul class="pts">
-          <li>웹 서버 IP 직접 접속 차단 (firewalld 또는 ACL)</li>
-          <li>VLAN 간 접근 제어(ACL)와 Firewall, DMZ 적용. 지금은 VLAN 간 통신을 제한하지 않습니다.</li>
-        </ul>
+      <div class="answer b">
+        <strong>보안 영역을 제외하고 만든 프로젝트입니다.</strong>
+        <p>Firewall, DMZ, VLAN 간 ACL, 웹 서버 IP 직접 접속 차단(firewalld)은 이번 범위에 넣지 않았습니다. 그래서 VLAN 간 통신은 제한하지 않았습니다.</p>
       </div>
     </div>
   </section>
