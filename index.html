@@ -663,14 +663,6 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
           </dl>
         </article>
         <article class="case">
-          <h3>WAN 구간 편도 통신</h3>
-          <dl>
-            <dt>증상</dt><dd>다른 지사로 ping을 보내면 나가기만 하고 응답이 돌아오지 않음</dd>
-            <dt>원인</dt><dd>static default route는 나가는 경로만 정의해서 상대 라우터가 <code>10.14.0.0/16</code>으로 돌아오는 경로를 몰랐음</dd>
-            <dt>해결</dt><dd>WAN 구간을 OSPF Area 0에 넣어 양쪽이 서로의 대역을 자동으로 학습하게 변경</dd>
-          </dl>
-        </article>
-        <article class="case">
           <h3>DHCP 서비스가 재부팅 후 꺼져 있음</h3>
           <dl>
             <dt>증상</dt><dd>클라이언트가 <code>169.254.x.x</code>(APIPA) 주소를 받음</dd>
