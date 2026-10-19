@@ -457,7 +457,17 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
           <li><b>Core 양쪽 연결.</b> 각 Dist를 Core-SW1과 Core-SW2에 모두 연결했습니다. Core 한 대가 내려가도 OSPF가 우회 경로를 고르고, 주요 경로는 ECMP로 양쪽에 등록됩니다.</li>
           <li><b>라우팅 전용 VLAN.</b> c3745의 NM-16ESW 포트는 L2 전용이라 <code>no switchport</code>로 라우팅 포트를 만들 수 없고 내장 L3 포트는 2개뿐이었습니다. VLAN 400~403을 L3 링크용으로 두고 SVI로 연결해 포트 제약을 피했습니다.</li>
           <li><b>게이트웨이 이중화.</b> Dist 쌍마다 HSRP를 적용했습니다. Active는 priority 110, Standby는 90이고 <code>preempt</code>로 장애 복구 후 원래 Active가 역할을 되찾습니다.</li>
-          <li><b>스패닝 트리(STP).</b> Access와 서버 집선 스위치는 Dist 두 대에 모두 연결되어 L2 루프가 생기므로, STP로 한쪽 링크를 대기 상태로 막아 루프를 방지합니다. Dist 쌍에 Root Primary와 Secondary를 지정해 루트 위치를 고정했고, 링크가 끊기면 대기 링크가 열립니다.</li>
+          <li><b>스패닝 트리(STP).</b> Access와 서버 집선 스위치(SRV-AGG)는 Dist 두 대에 모두 연결되어 L2 루프가 생기므로, VLAN마다 STP 인스턴스를 두고 한쪽 링크를 대기 상태로 막습니다. Root는 HSRP Active와 같은 Dist에 맞춰 트래픽 경로가 게이트웨이와 일치하게 했습니다. Core와 Access는 Root가 아니고, Core는 사용자 VLAN이 없어 해당 VLAN의 STP에 참여하지 않습니다. 예를 들어 VLAN 490은 Dist-SW1이 Root라서 SRV-AGG에서 Dist-SW2 방향 포트가 blocking입니다.
+            <div class="tw" style="margin-top:10px">
+              <table>
+                <thead><tr><th>VLAN</th><th>Root Primary</th><th>Root Secondary</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="tag">410</span> <span class="tag">420</span> <span class="tag">490</span></td><td>Dist-SW1</td><td>Dist-SW2</td></tr>
+                  <tr><td><span class="tag b">430</span> <span class="tag b">440</span> <span class="tag b">450</span></td><td>Dist-SW3</td><td>Dist-SW4</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </li>
           <li><b>OSPF Area 0.</b> WAN-IT, Core, Dist 전체가 한 영역에 있고, 사용자 VLAN은 <code>passive-interface</code>로 인접 형성을 막았습니다.</li>
         </ul>
       </div>
