@@ -120,6 +120,12 @@ svg.topo .on-core.t-sub { fill: var(--bg); opacity: .8; }
 svg.topo .txt-a { fill: var(--a); }
 svg.topo .txt-b { fill: var(--b); }
 .grp { transition: opacity .2s; }
+.tip { cursor: help; outline: none; }
+svg.topo .tip-t { text-decoration: underline dotted; text-underline-offset: 3px; }
+.tip:hover .tip-t, .tip:focus-visible .tip-t { fill: var(--ink); }
+.tip:focus-visible rect { stroke: var(--a); stroke-width: 2; }
+#tip-box { position: fixed; z-index: 10; max-width: 300px; padding: 10px 12px; font-size: 13.5px; line-height: 1.55; color: var(--bg); background: var(--ink); border-radius: 6px; pointer-events: none; opacity: 0; transition: opacity .12s; }
+#tip-box.on { opacity: 1; }
 svg.topo[data-focus="a"] .grp-b { opacity: .12; }
 svg.topo[data-focus="b"] .grp-a { opacity: .12; }
 .shot figcaption { margin-top: 10px; font-size: 14px; color: var(--muted); }
@@ -341,7 +347,10 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
           <text class="t-lbl mono txt-b" x="576" y="187">.5 ↔ .6</text>
         </g>
 
-        <text class="t-lbl t-muted" x="500" y="252" text-anchor="middle">코어 간 연결</text>
+        <g class="tip" tabindex="0" role="button" aria-describedby="tip-box" data-tip="Core-SW1과 Core-SW2는 서로 다른 라우팅 VLAN(400·402와 401·403)으로 WAN-IT와 Dist에 연결되어 평소에는 각자 경로를 맡습니다. 두 Core를 직접 이어 두면 한쪽의 WAN-IT 또는 Dist 링크가 끊겨도 다른 Core를 거쳐 우회할 수 있습니다.">
+          <rect x="450" y="239" width="100" height="18" fill="transparent"/>
+          <text class="t-lbl t-muted tip-t" x="500" y="252" text-anchor="middle">코어 간 연결</text>
+        </g>
         <text class="t-lbl mono t-muted" x="512" y="90">172.16.0.17 ↔ .18 /29</text>
 
         <rect class="node" x="440" y="22" width="120" height="36" rx="18"/>
@@ -720,7 +729,29 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
   <div class="wrap">GNS3 가상 환경에서 구축한 팀 프로젝트이며, 도메인과 IP는 실습용입니다.</div>
 </footer>
 
+<div id="tip-box" role="tooltip"></div>
+
 <script>
+(function () {
+  var box = document.getElementById('tip-box');
+  function show(el) {
+    box.textContent = el.getAttribute('data-tip');
+    var r = el.getBoundingClientRect();
+    box.classList.add('on');
+    var w = box.offsetWidth, h = box.offsetHeight;
+    var x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8);
+    var y = r.bottom + 8; if (y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 8);
+    box.style.left = x + 'px'; box.style.top = y + 'px';
+  }
+  function hide() { box.classList.remove('on'); }
+  document.querySelectorAll('.tip').forEach(function (t) {
+    t.addEventListener('mouseenter', function () { show(t); });
+    t.addEventListener('mouseleave', hide);
+    t.addEventListener('focus', function () { show(t); });
+    t.addEventListener('blur', hide);
+    t.addEventListener('click', function () { show(t); });
+  });
+})();
 (function () {
   var svg = document.getElementById('topo');
   var chips = document.querySelectorAll('.chip');
