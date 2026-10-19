@@ -78,11 +78,58 @@ h1 { margin: 0; font-size: clamp(40px, 8vw, 84px); line-height: 1.04; font-weigh
 .facts dt { font-size: 13px; color: var(--muted); }
 .facts dd { margin: 2px 0 0; font-weight: 600; overflow-wrap: anywhere; }
 
-/* original topology image */
+/* topology: redrawn diagram + collapsible original image */
 .shot { margin: 0 0 40px; }
-.shot .frame { overflow-x: auto; border: 1px solid var(--rule); background: #fff; border-radius: 6px; }
-.shot img { display: block; width: 100%; min-width: 880px; height: auto; }
+.shot-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; margin-bottom: 12px; }
+.shot-head h2 { margin: 0; font-size: 18px; font-weight: 700; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 13px var(--sans); color: var(--ink); background: transparent; border: 1px solid var(--muted); border-radius: 999px; padding: 3px 12px; cursor: pointer; }
+.chip:hover { background: var(--code-bg); }
+.chip:focus-visible { outline: 2px solid var(--a); outline-offset: 2px; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-bottom: 8px; font-size: 13.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { display: inline-block; width: 26px; height: 0; border-top: 3px solid; }
+.legend .la { border-color: var(--a); }
+.legend .lb { border-color: var(--b); }
+.legend .lg { border-color: var(--muted); border-top-width: 2px; }
+.legend .ld { border-color: var(--muted); border-top-width: 2px; border-top-style: dashed; }
+.shot .frame { overflow-x: auto; border: 1px solid var(--rule); background: var(--surface); border-radius: 6px; padding: 8px; }
+svg.topo { display: block; width: 100%; min-width: 860px; height: auto; }
+svg.topo text { font-family: var(--sans); fill: var(--ink); }
+svg.topo .mono { font-family: var(--mono); }
+.t-name { font-size: 13px; font-weight: 700; }
+.t-sub { font-size: 10px; }
+svg.topo .t-sub { fill: var(--muted); }
+.t-lbl { font-size: 11px; }
+.t-lbl-b { font-size: 11px; font-weight: 700; }
+svg.topo .t-muted { fill: var(--muted); }
+.node { fill: var(--surface); stroke: var(--muted); stroke-width: 1.5; }
+.node-core { fill: var(--ink); stroke: var(--ink); }
+svg.topo .on-core { fill: var(--bg); }
+svg.topo .on-core.t-sub { fill: var(--bg); opacity: .8; }
+.zone { fill: var(--bg); stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.chip-s { fill: var(--surface); stroke: var(--rule); }
+.dot { fill: var(--muted); }
+.ln { fill: none; stroke-width: 2; stroke-linecap: round; }
+.ln-a { stroke: var(--a); }
+.ln-b { stroke: var(--b); }
+.ln-g { stroke: var(--muted); stroke-width: 1.5; }
+.ln-d { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 5 4; }
+svg.topo .txt-a { fill: var(--a); }
+svg.topo .txt-b { fill: var(--b); }
+.grp { transition: opacity .2s; }
+svg.topo[data-focus="a"] .grp-b { opacity: .12; }
+svg.topo[data-focus="b"] .grp-a { opacity: .12; }
 .shot figcaption { margin-top: 10px; font-size: 14px; color: var(--muted); }
+details.orig { margin-top: 14px; border-top: 1px solid var(--rule); }
+details.orig summary { cursor: pointer; padding: 12px 0; font-weight: 600; list-style: none; display: flex; align-items: center; gap: 10px; }
+details.orig summary::-webkit-details-marker { display: none; }
+details.orig summary::before { content: ""; width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .15s; }
+details.orig[open] summary::before { transform: rotate(45deg); }
+details.orig .frame { background: #fff; padding: 0; }
+details.orig img { display: block; width: 100%; min-width: 880px; height: auto; }
+@media (prefers-reduced-motion: reduce) { .grp, details.orig summary::before { transition: none; } }
 
 /* sections */
 section.sec { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px 48px; padding-block: 56px; border-top: 1px solid var(--rule); }
@@ -188,12 +235,152 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
   </section>
 
   <figure class="shot">
-    <div class="frame">
-      <a href="assets/topology.webp" target="_blank" rel="noopener">
-        <img src="assets/topology.webp" width="2567" height="1097" alt="GNS3 구성도 원본: WAN-IT 라우터 아래 Core-SW1·2, Dist-SW1~4, Access-SW1~5와 서버 구간(SRV-AGG), PC 25대">
-      </a>
+    <div class="shot-head">
+      <h2>구성도</h2>
+      <div class="chips" role="group" aria-label="경로 강조">
+        <button class="chip" type="button" data-f="all" aria-pressed="true">전체</button>
+        <button class="chip" type="button" data-f="a" aria-pressed="false">Core-SW1 경로</button>
+        <button class="chip" type="button" data-f="b" aria-pressed="false">Core-SW2 경로</button>
+      </div>
     </div>
-    <figcaption>GNS3 구성도 원본입니다. 이미지를 누르면 원본 크기로 볼 수 있습니다.</figcaption>
+    <div class="legend">
+      <span><i class="la"></i>Core-SW1 경로 (VLAN 400, 402)</span>
+      <span><i class="lb"></i>Core-SW2 경로 (VLAN 401, 403)</span>
+      <span><i class="lg"></i>Access와 서버 업링크</span>
+      <span><i class="ld"></i>스위치 간 연결</span>
+    </div>
+    <div class="frame">
+      <svg class="topo" id="topo" viewBox="0 0 1000 680" role="img" data-focus="all"
+           aria-label="WAN-IT 라우터 아래에 Core-SW1과 Core-SW2가 있고, 두 코어가 Dist-SW1~4와 각각 연결되며, Dist 아래 Access 스위치 5대에 PC가 5대씩, Dist-SW1과 2에 서버 집선 스위치가 연결된 구성도">
+        <g>
+          <line class="ln ln-g" x1="500" y1="40" x2="500" y2="127"/>
+          <line class="ln ln-d" x1="390" y1="235" x2="610" y2="235"/>
+          <line class="ln ln-d" x1="190" y1="365" x2="370" y2="365"/>
+          <line class="ln ln-d" x1="630" y1="365" x2="810" y2="365"/>
+          <line class="ln ln-g" x1="114" y1="202" x2="115" y2="270"/>
+          <line class="ln ln-g" x1="115" y1="270" x2="190" y2="365"/>
+          <line class="ln ln-g" x1="115" y1="270" x2="370" y2="365"/>
+          <line class="ln ln-g" x1="120" y1="520" x2="190" y2="365"/>
+          <line class="ln ln-g" x1="120" y1="520" x2="370" y2="365"/>
+          <line class="ln ln-g" x1="300" y1="520" x2="190" y2="365"/>
+          <line class="ln ln-g" x1="300" y1="520" x2="370" y2="365"/>
+          <line class="ln ln-g" x1="520" y1="520" x2="630" y2="365"/>
+          <line class="ln ln-g" x1="520" y1="520" x2="810" y2="365"/>
+          <line class="ln ln-g" x1="700" y1="520" x2="630" y2="365"/>
+          <line class="ln ln-g" x1="700" y1="520" x2="810" y2="365"/>
+          <line class="ln ln-g" x1="890" y1="520" x2="630" y2="365"/>
+          <line class="ln ln-g" x1="890" y1="520" x2="810" y2="365"/>
+          <line class="ln ln-g" x1="120" y1="540" x2="120" y2="600"/>
+          <line class="ln ln-g" x1="300" y1="540" x2="300" y2="600"/>
+          <line class="ln ln-g" x1="520" y1="540" x2="520" y2="600"/>
+          <line class="ln ln-g" x1="700" y1="540" x2="700" y2="600"/>
+          <line class="ln ln-g" x1="890" y1="540" x2="890" y2="600"/>
+        </g>
+
+        <g class="grp grp-a">
+          <line class="ln ln-a" x1="500" y1="127" x2="390" y2="235"/>
+          <line class="ln ln-a" x1="390" y1="235" x2="190" y2="365"/>
+          <line class="ln ln-a" x1="390" y1="235" x2="370" y2="365"/>
+          <line class="ln ln-a" x1="390" y1="235" x2="630" y2="365"/>
+          <line class="ln ln-a" x1="390" y1="235" x2="810" y2="365"/>
+          <text class="t-lbl-b txt-a" x="424" y="172" text-anchor="end">VLAN 400 · 10.14.0.0/30</text>
+          <text class="t-lbl mono txt-a" x="424" y="187" text-anchor="end">.1 ↔ .2</text>
+        </g>
+        <g class="grp grp-b">
+          <line class="ln ln-b" x1="500" y1="127" x2="610" y2="235"/>
+          <line class="ln ln-b" x1="610" y1="235" x2="190" y2="365"/>
+          <line class="ln ln-b" x1="610" y1="235" x2="370" y2="365"/>
+          <line class="ln ln-b" x1="610" y1="235" x2="630" y2="365"/>
+          <line class="ln ln-b" x1="610" y1="235" x2="810" y2="365"/>
+          <text class="t-lbl-b txt-b" x="576" y="172">VLAN 401 · 10.14.0.4/30</text>
+          <text class="t-lbl mono txt-b" x="576" y="187">.5 ↔ .6</text>
+        </g>
+
+        <text class="t-lbl t-muted" x="500" y="252" text-anchor="middle">코어 간 연결</text>
+        <text class="t-lbl mono t-muted" x="512" y="90">172.16.0.17 ↔ .18 /29</text>
+
+        <rect class="node" x="440" y="22" width="120" height="36" rx="18"/>
+        <text class="t-name" x="500" y="45" text-anchor="middle">Cloud1</text>
+        <rect class="node" x="436" y="105" width="128" height="44" rx="8"/>
+        <text class="t-name" x="500" y="124" text-anchor="middle">WAN-IT</text>
+        <text class="t-sub" x="500" y="140" text-anchor="middle">라우터</text>
+
+        <rect class="node node-core" x="326" y="213" width="128" height="44" rx="8"/>
+        <text class="t-name on-core" x="390" y="231" text-anchor="middle">Core-SW1</text>
+        <text class="t-sub mono on-core" x="390" y="246" text-anchor="middle">400:.2 · 402:.9</text>
+        <rect class="node node-core" x="546" y="213" width="128" height="44" rx="8"/>
+        <text class="t-name on-core" x="610" y="231" text-anchor="middle">Core-SW2</text>
+        <text class="t-sub mono on-core" x="610" y="246" text-anchor="middle">401:.6 · 403:.17</text>
+
+        <rect class="node" x="126" y="343" width="128" height="44" rx="8"/>
+        <text class="t-name" x="190" y="361" text-anchor="middle">Dist-SW1</text>
+        <text class="t-sub mono" x="190" y="376" text-anchor="middle">402:.10 · 403:.18</text>
+        <rect class="node" x="306" y="343" width="128" height="44" rx="8"/>
+        <text class="t-name" x="370" y="361" text-anchor="middle">Dist-SW2</text>
+        <text class="t-sub mono" x="370" y="376" text-anchor="middle">402:.11 · 403:.19</text>
+        <rect class="node" x="566" y="343" width="128" height="44" rx="8"/>
+        <text class="t-name" x="630" y="361" text-anchor="middle">Dist-SW3</text>
+        <text class="t-sub mono" x="630" y="376" text-anchor="middle">402:.12 · 403:.20</text>
+        <rect class="node" x="746" y="343" width="128" height="44" rx="8"/>
+        <text class="t-name" x="810" y="361" text-anchor="middle">Dist-SW4</text>
+        <text class="t-sub mono" x="810" y="376" text-anchor="middle">402:.13 · 403:.21</text>
+
+        <rect class="zone" x="16" y="56" width="196" height="146" rx="8"/>
+        <text class="t-lbl-b" x="30" y="77">서버존 · VLAN 490</text>
+        <rect class="chip-s" x="30" y="90" width="168" height="20" rx="4"/>
+        <text class="t-lbl mono" x="42" y="104">IT-DB</text>
+        <rect class="chip-s" x="30" y="116" width="168" height="20" rx="4"/>
+        <text class="t-lbl mono" x="42" y="130">CNS-01</text>
+        <rect class="chip-s" x="30" y="142" width="168" height="20" rx="4"/>
+        <text class="t-lbl mono" x="42" y="156">DNS-01</text>
+        <rect class="chip-s" x="30" y="168" width="168" height="20" rx="4"/>
+        <text class="t-lbl mono" x="42" y="182">DHCP-Server</text>
+        <rect class="node" x="55" y="250" width="120" height="40" rx="8"/>
+        <text class="t-name" x="115" y="275" text-anchor="middle">SRV-AGG</text>
+
+        <rect class="node" x="60" y="500" width="120" height="40" rx="8"/>
+        <text class="t-name" x="120" y="525" text-anchor="middle">Access-SW1</text>
+        <rect class="node" x="240" y="500" width="120" height="40" rx="8"/>
+        <text class="t-name" x="300" y="525" text-anchor="middle">Access-SW2</text>
+        <rect class="node" x="460" y="500" width="120" height="40" rx="8"/>
+        <text class="t-name" x="520" y="525" text-anchor="middle">Access-SW3</text>
+        <rect class="node" x="640" y="500" width="120" height="40" rx="8"/>
+        <text class="t-name" x="700" y="525" text-anchor="middle">Access-SW4</text>
+        <rect class="node" x="830" y="500" width="120" height="40" rx="8"/>
+        <text class="t-name" x="890" y="525" text-anchor="middle">Access-SW5</text>
+
+        <rect class="zone" x="45" y="600" width="150" height="58" rx="8"/>
+        <text class="t-lbl-b" x="120" y="621" text-anchor="middle">VLAN 410 개발팀</text>
+        <circle class="dot" cx="80" cy="643" r="4"/><circle class="dot" cx="100" cy="643" r="4"/><circle class="dot" cx="120" cy="643" r="4"/><circle class="dot" cx="140" cy="643" r="4"/><circle class="dot" cx="160" cy="643" r="4"/>
+
+        <rect class="zone" x="225" y="600" width="150" height="58" rx="8"/>
+        <text class="t-lbl-b" x="300" y="621" text-anchor="middle">VLAN 420 인프라팀</text>
+        <circle class="dot" cx="260" cy="643" r="4"/><circle class="dot" cx="280" cy="643" r="4"/><circle class="dot" cx="300" cy="643" r="4"/><circle class="dot" cx="320" cy="643" r="4"/><circle class="dot" cx="340" cy="643" r="4"/>
+
+        <rect class="zone" x="445" y="600" width="150" height="58" rx="8"/>
+        <text class="t-lbl-b" x="520" y="621" text-anchor="middle">VLAN 430 네트워크팀</text>
+        <circle class="dot" cx="480" cy="643" r="4"/><circle class="dot" cx="500" cy="643" r="4"/><circle class="dot" cx="520" cy="643" r="4"/><circle class="dot" cx="540" cy="643" r="4"/><circle class="dot" cx="560" cy="643" r="4"/>
+
+        <rect class="zone" x="625" y="600" width="150" height="58" rx="8"/>
+        <text class="t-lbl-b" x="700" y="621" text-anchor="middle">VLAN 440 시스템팀</text>
+        <circle class="dot" cx="660" cy="643" r="4"/><circle class="dot" cx="680" cy="643" r="4"/><circle class="dot" cx="700" cy="643" r="4"/><circle class="dot" cx="720" cy="643" r="4"/><circle class="dot" cx="740" cy="643" r="4"/>
+
+        <rect class="zone" x="815" y="600" width="150" height="58" rx="8"/>
+        <text class="t-lbl-b" x="890" y="621" text-anchor="middle">VLAN 450 보안·QA·운영</text>
+        <circle class="dot" cx="850" cy="643" r="4"/><circle class="dot" cx="870" cy="643" r="4"/><circle class="dot" cx="890" cy="643" r="4"/><circle class="dot" cx="910" cy="643" r="4"/><circle class="dot" cx="930" cy="643" r="4"/>
+      </svg>
+    </div>
+    <figcaption>GNS3 구성도를 다시 그린 그림입니다. 스위치 안의 숫자는 VLAN별 주소의 마지막 자리이고, 점은 PC 1대입니다.</figcaption>
+
+    <details class="orig">
+      <summary>GNS3 구성도 원본 이미지 보기</summary>
+      <div class="frame">
+        <a href="assets/topology.webp" target="_blank" rel="noopener">
+          <img src="assets/topology.webp" width="2567" height="1097" loading="lazy" alt="GNS3 구성도 원본: WAN-IT 라우터 아래 Core-SW1·2, Dist-SW1~4, Access-SW1~5와 서버 구간(SRV-AGG), PC 25대">
+        </a>
+      </div>
+      <p class="small muted" style="margin:8px 0 0">이미지를 누르면 새 탭에서 원본 크기로 열립니다. 이미지 안의 PC 이름은 DEV, INFRA, DEV2, NETOPER, QA입니다.</p>
+    </details>
   </figure>
 
   <!-- 설계 -->
@@ -487,6 +674,19 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
 <footer>
   <div class="wrap">GNS3 가상 환경에서 구축한 팀 프로젝트이며, 도메인과 IP는 실습용입니다.</div>
 </footer>
+
+<script>
+(function () {
+  var svg = document.getElementById('topo');
+  var chips = document.querySelectorAll('.chip');
+  chips.forEach(function (c) {
+    c.addEventListener('click', function () {
+      svg.setAttribute('data-focus', c.getAttribute('data-f'));
+      chips.forEach(function (o) { o.setAttribute('aria-pressed', String(o === c)); });
+    });
+  });
+})();
+</script>
 
 </body>
 </html>
