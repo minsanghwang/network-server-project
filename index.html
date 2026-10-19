@@ -50,6 +50,7 @@ body {
   margin: 0; background: var(--bg); color: var(--ink);
   font-family: var(--sans); font-size: 16px; line-height: 1.7;
   -webkit-font-smoothing: antialiased;
+  word-break: keep-all; overflow-wrap: break-word;
 }
 a { color: var(--a); text-underline-offset: 3px; }
 a:focus-visible, summary:focus-visible { outline: 2px solid var(--a); outline-offset: 3px; border-radius: 3px; }
@@ -542,8 +543,8 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
       <div>
         <h3>개발 구간에 인프라 PC를 꽂으면 인프라 대역에 접속할 수 있나</h3>
         <div class="answer b">
-          <strong>접속할 수 있습니다.</strong>
-          <p class="muted" style="margin:0">VLAN 간 통신은 Dist-SW1의 SVI에서 라우팅되고, 설계 문서에 VLAN 간 ACL이 없습니다.</p>
+          <strong>접속할 수 있습니다. 포트의 VLAN만 바꾸면 인프라 네트워크를 그대로 쓸 수도 있습니다.</strong>
+          <p class="muted" style="margin:0">VLAN 간 통신은 Dist-SW1의 SVI에서 라우팅되고 VLAN 간 ACL은 없습니다. Access와 Dist 사이 트렁크는 인프라 VLAN(420)을 포함해 사용자 VLAN을 모두 통과시킵니다.</p>
         </div>
 
         <div class="fig" style="margin-top:22px">
@@ -583,6 +584,7 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
           <table>
             <thead><tr><th></th><th>개발 포트(VLAN 410)에 연결</th><th>포트를 VLAN 420으로 변경</th></tr></thead>
             <tbody>
+              <tr><td>필요한 설정</td><td>없음</td><td>포트에 <code>switchport access vlan 420</code> 한 줄</td></tr>
               <tr><td>받는 IP</td><td class="mono">10.14.10.11~200</td><td class="mono">10.14.20.11~200</td></tr>
               <tr><td>인프라 대역 접속</td><td>가능 (L3 라우팅)</td><td>가능 (같은 VLAN)</td></tr>
               <tr><td>쇼핑몰 접속</td><td>가능, <code>10.14.10.0/24</code> 허용 대역</td><td>거부</td></tr>
@@ -592,7 +594,7 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
         </div>
         <ul class="pts small" style="margin-top:14px">
           <li>접근 권한이 사람이 아니라 IP 대역을 기준으로 정해집니다. 인프라팀 사용자가 개발 포트에 연결하면 개발 대역 IP를 받아 쇼핑몰 접근 제어를 통과합니다.</li>
-          <li>인프라 VLAN에 정식으로 들어오게 하려면 해당 포트를 <code>switchport access vlan 420</code>으로 바꾸고, Access-SW1과 Dist 사이 트렁크에 VLAN 420이 허용되는지 확인해야 합니다. 트렁크 허용 목록은 문서에 없어서 확인이 필요합니다.</li>
+          <li>인프라팀이 개발 구간에서 일해야 하면 그 포트를 VLAN 420으로 바꾸면 됩니다. 트렁크가 VLAN 420을 이미 통과시키므로 배선이나 트렁크는 건드리지 않고, Access-SW1에 VLAN 420이 등록되어 있기만 하면 됩니다.</li>
           <li>호스트 방화벽(firewalld)이나 이후에 추가하는 ACL이 있으면 결과가 달라집니다.</li>
         </ul>
       </div>
@@ -603,16 +605,17 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
   <section class="sec" id="trouble" aria-labelledby="h-trouble">
     <header>
       <h2 id="h-trouble">트러블슈팅</h2>
-      <p>구축 중 마주친 장애 가운데 세 가지입니다.</p>
+      <p>기획 단계의 규모 설계 문제를 먼저, 이어서 실무에서도 일어나는 장애를 정리했습니다.</p>
     </header>
     <div class="body">
       <div class="cases">
         <article class="case">
-          <h3>VLAN이 재부팅마다 사라짐</h3>
+          <h3>기획 단계의 규모 설계 문제</h3>
           <dl>
-            <dt>증상</dt><dd>재부팅 후 VLAN이 사라지고 SVI가 내려가며 HSRP가 <code>Init</code> 상태가 됨</dd>
-            <dt>원인</dt><dd>VLAN 정보는 running-config가 아니라 flash의 <code>vlan.dat</code>에 저장되는데, GNS3 노드의 기본 디스크 용량이 부족해 저장이 실패하고 있었음</dd>
-            <dt>해결</dt><dd>모든 스위치 노드의 디스크를 32MiB로 늘려 포맷하고, VLAN 작업 뒤 <code>dir flash:</code> 확인을 절차로 고정</dd>
+            <dt>상황</dt><dd>처음에는 Core가 Distribution 역할을 겸하는 2계층(Collapsed Core)으로 설계해 구축했고, 모든 Access를 Core에 직결했음</dd>
+            <dt>문제</dt><dd>부서별 PC가 늘어나는 규모를 설계 때 산정하지 않아, Access를 늘릴수록 Core의 포트가 모자라고 게이트웨이와 이중화가 Core 두 대에 몰리는 구조였음</dd>
+            <dt>해결</dt><dd>Dist 4대를 추가해 Core 양쪽에 연결하고 게이트웨이(SVI + HSRP)를 Dist로 옮김. NM-16ESW 포트가 L2 전용이라 라우팅 전용 VLAN(402, 403)과 SVI로 L3 링크를 구성. 운영 중인 DHCP, DNS, 웹 서비스를 중단하지 않고 전환</dd>
+            <dt>결과</dt><dd>Core 단일 장애 시 OSPF가 우회하는 것을 검증했고, Access 스위치를 늘려도 기존 서비스에 영향이 없는 구조가 됨. 사용자 수, 포트 수, 이중화 수준을 먼저 정하고 계층을 정해야 한다는 점을 배움</dd>
           </dl>
         </article>
         <article class="case">
@@ -631,8 +634,23 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
             <dt>해결</dt><dd>WAN 구간을 OSPF Area 0에 넣어 양쪽이 서로의 대역을 자동으로 학습하게 변경</dd>
           </dl>
         </article>
+        <article class="case">
+          <h3>DHCP 서비스가 재부팅 후 꺼져 있음</h3>
+          <dl>
+            <dt>증상</dt><dd>클라이언트가 <code>169.254.x.x</code>(APIPA) 주소를 받음</dd>
+            <dt>원인</dt><dd>서버 로그에 <code>DHCPDISCOVER</code>가 도달하지 않아 Relay 경로를 먼저 의심했으나, 재부팅 후 <code>dhcpd</code>가 자동 시작되지 않는 상태(<code>disabled</code>)였음</dd>
+            <dt>해결</dt><dd><code>systemctl enable dhcpd</code>로 자동 시작을 등록하고, named, httpd, mariadb도 함께 점검해 enable</dd>
+          </dl>
+        </article>
       </div>
-      <p class="small muted">이 밖에 GNS3와 VirtualBox 사이 단방향 통신, DHCP 서비스 자동 시작 누락(APIPA 주소 수신), MTU 때문에 패키지 설치가 멈추는 문제도 해결했습니다.</p>
+      <div>
+        <h3>가상 환경에서만 생긴 문제</h3>
+        <ul class="pts small">
+          <li>GNS3 노드의 디스크 용량이 부족해 <code>vlan.dat</code> 저장이 실패하고, 재부팅마다 VLAN이 사라져 HSRP가 <code>Init</code>이 됨. 디스크를 32MiB로 늘리고 VLAN 작업 뒤 <code>dir flash:</code>를 확인</li>
+          <li>GNS3가 비정상 종료된 뒤 VirtualBox 서버와의 링크가 단방향으로만 동작. GNS3를 재시작하고, 케이블은 VM을 멈춘 상태에서 연결</li>
+          <li>가상 경로의 MTU 문제로 패키지 설치가 중간에 멈춤. MTU를 1400으로 낮춰 해결</li>
+        </ul>
+      </div>
     </div>
   </section>
 
@@ -661,9 +679,8 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
       <div>
         <h3>남은 과제</h3>
         <ul class="pts">
-          <li>관리 네트워크 구축 (관리 VLAN, NTP, Syslog, NMS)</li>
-          <li>Dist 단일 장애 시 HSRP 페일오버 최종 검증</li>
           <li>웹 서버 IP 직접 접속 차단 (firewalld 또는 ACL)</li>
+          <li>VLAN 간 접근 제어(ACL)와 Firewall, DMZ 적용. 지금은 VLAN 간 통신을 제한하지 않습니다.</li>
         </ul>
       </div>
     </div>
