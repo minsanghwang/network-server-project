@@ -649,7 +649,7 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
   <section class="sec" id="trouble" aria-labelledby="h-trouble">
     <header>
       <h2 id="h-trouble">트러블슈팅</h2>
-      <p>설계 단계의 규모 문제를 먼저, 이어서 실무에서도 일어나는 장애를 정리했습니다.</p>
+      <p>설계 단계의 규모 문제와, GNS3 가상 환경 때문에 생긴 문제로 나눠 정리했습니다.</p>
     </header>
     <div class="body">
       <div class="cases">
@@ -663,21 +663,13 @@ footer { border-top: 1px solid var(--rule); padding-block: 28px 56px; font-size:
           </dl>
         </article>
         <article class="case">
-          <h3>DHCP 서비스가 재부팅 후 꺼져 있음</h3>
+          <h3>GNS3 가상 환경 이슈</h3>
           <dl>
-            <dt>증상</dt><dd>클라이언트가 <code>169.254.x.x</code>(APIPA) 주소를 받음</dd>
-            <dt>원인</dt><dd>서버 로그에 <code>DHCPDISCOVER</code>가 도달하지 않아 Relay 경로를 먼저 의심했으나, 재부팅 후 <code>dhcpd</code>가 자동 시작되지 않는 상태(<code>disabled</code>)였음</dd>
-            <dt>해결</dt><dd><code>systemctl enable dhcpd</code>로 자동 시작을 등록하고, named, httpd, mariadb도 함께 점검해 enable</dd>
+            <dt>저장</dt><dd>노드 디스크 용량이 부족해 <code>vlan.dat</code> 저장이 실패하고, 재부팅마다 VLAN이 사라져 HSRP가 <code>Init</code>이 됨. 디스크를 32MiB로 늘리고 VLAN 작업 뒤 <code>dir flash:</code>로 확인</dd>
+            <dt>링크</dt><dd>GNS3가 비정상 종료된 뒤 VirtualBox 서버와의 링크가 단방향으로만 동작. GNS3를 재시작하고, 케이블은 VM을 멈춘 상태에서 연결</dd>
+            <dt>MTU</dt><dd>가상 경로의 MTU 문제로 패키지 설치가 중간에 멈춤. MTU를 1400으로 낮춰 해결</dd>
           </dl>
         </article>
-      </div>
-      <div>
-        <h3>가상 환경에서만 생긴 문제</h3>
-        <ul class="pts small">
-          <li>GNS3 노드의 디스크 용량이 부족해 <code>vlan.dat</code> 저장이 실패하고, 재부팅마다 VLAN이 사라져 HSRP가 <code>Init</code>이 됨. 디스크를 32MiB로 늘리고 VLAN 작업 뒤 <code>dir flash:</code>를 확인</li>
-          <li>GNS3가 비정상 종료된 뒤 VirtualBox 서버와의 링크가 단방향으로만 동작. GNS3를 재시작하고, 케이블은 VM을 멈춘 상태에서 연결</li>
-          <li>가상 경로의 MTU 문제로 패키지 설치가 중간에 멈춤. MTU를 1400으로 낮춰 해결</li>
-        </ul>
       </div>
     </div>
   </section>
